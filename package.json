@@ -1,0 +1,253 @@
+{
+  "name": "butter-copilot",
+  "displayName": "Butter for Copilot",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Use Bedrock models in Copilot Chat via Butter proxy",
+  "categories": [
+    "AI",
+    "Chat"
+  ],
+  "keywords": [
+    "aws",
+    "bedrock",
+    "butter",
+    "claude",
+    "copilot",
+    "llm"
+  ],
+  "homepage": "https://github.com/burritobill/copilot-butter-provider#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burritobill/copilot-butter-provider"
+  },
+  "publisher": "burritobill",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "bun build ./src/extension.ts --outfile=dist/extension.js --external vscode --format=cjs --target=node",
+    "watch": "bun run compile --watch",
+    "test": "bun test",
+    "ci:version": "changeset version && bun install",
+    "typecheck": "tsc --noEmit",
+    "format": "oxfmt",
+    "lint": "oxfmt --check && oxlint --deny-warnings",
+    "lint:fix": "oxfmt && oxlint --fix",
+    "knip": "knip",
+    "knip:fix": "knip --fix",
+    "package": "vsce package --no-dependencies",
+    "install:local": "./scripts/install.sh",
+    "vscode:prepublish": "bun run compile",
+    "release": "./bin/release",
+    "deploy:local": "./bin/deploy-local",
+    "download-proposed-api": "curl -sfL https://raw.githubusercontent.com/microsoft/vscode/main/src/vscode-dts/vscode.proposed.chatProvider.d.ts -o vscode.proposed.chatProvider.d.ts",
+    "postinstall": "bun run download-proposed-api"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.1056.0",
+    "@aws-sdk/client-resource-groups-tagging-api": "^3.1056.0",
+    "@aws-sdk/client-sts": "^3.1056.0",
+    "@aws-sdk/credential-providers": "^3.1056.0"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@types/bun": "latest",
+    "@types/node": "^25.9.1",
+    "@types/vscode": "^1.103.0",
+    "@vscode/vsce": "^3.0.0",
+    "knip": "^6.6.1",
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.57.0",
+    "oxlint-tsgolint": "^0.17.4",
+    "typescript": "^5.8.0"
+  },
+  "contributes": {
+    "languageModelChatProviders": [
+      {
+        "vendor": "butter",
+        "displayName": "Butter"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "butter_analyzeUsage",
+        "displayName": "Analyze Butter Usage",
+        "modelDescription": "Analyze recent Butter AI-proxy usage (model distribution, error clusters, latency outliers) from metrics and request logs. Returns a structured summary to inform suggestions for the workspace's agent-instructions file (AGENTS.md, CLAUDE.md, or .github/copilot-instructions.md). Returns summaries only, never raw request/response bodies.",
+        "userDescription": "Analyze Butter proxy usage to suggest agent-instruction improvements",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "butterUsage",
+        "icon": "$(symbol-field)",
+        "tags": [
+          "butter",
+          "observability"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of recent requests to consider (default 200)."
+            }
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "butter-copilot.start",
+        "title": "Start Proxy",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.stop",
+        "title": "Stop Proxy",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.restart",
+        "title": "Restart Proxy",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.showLogs",
+        "title": "Show Logs",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.editConfig",
+        "title": "Edit Config",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.selectProfile",
+        "title": "Select AWS Profile",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.updateBinary",
+        "title": "Update Binary",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.showSettings",
+        "title": "Settings",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.showStatusMenu",
+        "title": "Status Menu",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.resetConfig",
+        "title": "Reset Config",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.showStatus",
+        "title": "Show Status",
+        "category": "Butter"
+      },
+      {
+        "command": "butter-copilot.setupInferenceProfiles",
+        "title": "Setup Inference Profiles",
+        "category": "Butter"
+      }
+    ],
+    "configuration": {
+      "title": "Butter for Copilot",
+      "properties": {
+        "butter-copilot.mode": {
+          "type": "string",
+          "enum": [
+            "managed",
+            "external"
+          ],
+          "default": "managed",
+          "description": "Run a managed local Butter process or connect to an external instance"
+        },
+        "butter-copilot.externalUrl": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "URL of external Butter instance (used when mode is 'external')"
+        },
+        "butter-copilot.port": {
+          "type": "number",
+          "default": 8091,
+          "description": "Port for managed Butter process"
+        },
+        "butter-copilot.awsProfile": {
+          "type": "string",
+          "default": "",
+          "description": "AWS profile for Bedrock access"
+        },
+        "butter-copilot.awsRegion": {
+          "type": "string",
+          "default": "us-west-2",
+          "description": "AWS region for Bedrock"
+        },
+        "butter-copilot.butterBinaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Override path to Butter binary (leave empty for auto-download)"
+        },
+        "butter-copilot.configPath": {
+          "type": "string",
+          "default": "~/.butter-copilot/config.yaml",
+          "description": "Path to Butter config file"
+        },
+        "butter-copilot.modelMap": {
+          "type": "object",
+          "default": {},
+          "description": "Additional Anthropic → Bedrock model ID mappings"
+        },
+        "butter-copilot.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "description": "Log level for Butter process output"
+        },
+        "butter-copilot.logBodies": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log request and response bodies in Butter's request log. WARNING: bodies may contain source code or secrets. Used by the dashboard and the analyze-usage tool (which summarizes, never dumps, bodies)."
+        },
+        "butter-copilot.bodyMaxBytes": {
+          "type": "number",
+          "default": 4096,
+          "description": "Maximum number of bytes of each request/response body to log when 'logBodies' is enabled."
+        },
+        "butter-copilot.useInferenceProfiles": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use custom inference profiles for cost attribution (creates application inference profiles via Bedrock API)"
+        },
+        "butter-copilot.inferenceProfileMap": {
+          "type": "object",
+          "default": {},
+          "description": "Auto-populated mapping from model IDs to inference profile ARNs"
+        },
+        "butter-copilot.modelDisplayNames": {
+          "type": "object",
+          "default": {},
+          "description": "Auto-populated mapping from inference profile ARNs to friendly display names"
+        }
+      }
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "icon": "public/logo_no_text.png",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "enabledApiProposals": [
+    "chatProvider"
+  ]
+}

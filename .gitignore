@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+release/
+*.vsix
+*.tgz
+tmp/
+
+*.log
+.DS_Store
+
+vscode.d.ts
+vscode.proposed.*.d.ts
+
+.devbox/
+.nix-profile/
+.cache/

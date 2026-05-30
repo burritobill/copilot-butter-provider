@@ -1,0 +1,43 @@
+repos:
+  - repo: local
+    hooks:
+      - &defaults
+        id: typecheck
+        name: typecheck
+        entry: bun run typecheck
+        language: system
+        pass_filenames: false
+        priority: 0
+
+      - <<: *defaults
+        id: knip
+        name: knip
+        entry: bun run knip:fix
+        priority: 1
+
+      - <<: *defaults
+        id: lint
+        name: lint
+        entry: bun run lint
+        priority: 2
+
+      - <<: *defaults
+        id: test
+        name: test
+        entry: bun test
+        priority: 3
+
+      - <<: *defaults
+        id: test-scripts
+        name: test-scripts
+        entry: bats scripts/argv-merge.bats
+        priority: 4
+
+      - <<: *defaults
+        id: shellcheck
+        name: shellcheck
+        entry: shellcheck --severity=style --enable=all
+        pass_filenames: true
+        files: '^(scripts/.*\.sh|bin/(deploy-local|release))$'
+        types: []
+        priority: 5

@@ -1,0 +1,39 @@
+{
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
+  "prettier.enable": false,
+  "files.associations": {
+    "bun.lock": "plaintext"
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "bun.lock, tsconfig.json, .ox*rc.json",
+    "devbox.json": "devbox.lock, .envrc, .envrc.private"
+  },
+  "chat.tools.terminal.autoApprove": {
+    "bun run": true,
+    "bun test": true,
+    "devbox run": true
+  },
+  "shellcheck.customArgs": ["-x", "--severity=style", "--enable=all"],
+  "shellcheck.ignorePatterns": {
+    "**/*.bats": true
+  }
+}
