@@ -43,8 +43,8 @@ jobs:
           cp release/butter-copilot-"${VERSION}".tar.gz release/butter-copilot.tar.gz
 
           gh release create "$TAG" \
-            release/butter-copilot-"${VERSION}".tar.gz \
             release/butter-copilot.tar.gz \
+            butter-copilot-"${VERSION}".vsix \
             --title "$TAG" \
             --generate-notes
         env:
