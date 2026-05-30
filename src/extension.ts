@@ -4,6 +4,7 @@ import { AnalyzeUsageTool } from "./analyzeUsageTool"
 import { BinaryManager } from "./binaryManager"
 import { ConfigManager } from "./configManager"
 import { CredentialManager } from "./credentialManager"
+import { checkForExtensionUpdate } from "./extensionUpdater"
 import { InferenceProfileManager } from "./inferenceProfileManager"
 import { ProcessManager } from "./processManager"
 import { ButterChatModelProvider } from "./provider"
@@ -295,6 +296,9 @@ export function activate(context: vscode.ExtensionContext) {
     () => void binaryManager.checkForUpdate(),
     (err) => outputChannel.appendLine(`Failed to ensure Butter binary: ${err}`),
   )
+
+  // Check for extension updates (silent on failure)
+  checkForExtensionUpdate(outputChannel).catch(() => {})
 
   // Lazy start: validate credentials and spawn Butter on first use.
   let startPromise: Promise<void> | null = null
