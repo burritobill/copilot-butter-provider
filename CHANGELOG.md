@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.3
+
+### Patch Changes
+
+- 884876e: Ensure release tar has a stable name
+
 ## 0.0.2
 
 ### Patch Changes
