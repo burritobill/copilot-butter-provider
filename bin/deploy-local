@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#
+# Build and deploy the extension to the local VS Code extensions directory.
+# Useful during development to pick up changes without a full VSIX install.
+#
+# Run: ./bin/deploy-local
+# Then: reload the VS Code window (Developer: Reload Window).
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+name="$(node -p "require('./package.json').name")"
+publisher="$(node -p "require('./package.json').publisher")"
+version="$(node -p "require('./package.json').version")"
+
+ext_dir="${HOME}/.vscode/extensions/${publisher}.${name}-${version}"
+
+echo "Building ${publisher}.${name} v${version}"
+bun run compile
+
+echo "Deploying to ${ext_dir}"
+mkdir -p "${ext_dir}/dist"
+cp dist/extension.js "${ext_dir}/dist/extension.js"
+cp package.json "${ext_dir}/package.json"
+mkdir -p "${ext_dir}/public"
+cp -R public/. "${ext_dir}/public/"
+
+echo "Done. Reload the VS Code window to pick up the changes."

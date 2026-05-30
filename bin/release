@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#
+# Build a release tarball for the Butter for Copilot extension.
+#
+# The tarball is flat: install.sh, argv-merge.sh, and the packaged .vsix all sit
+# side by side. A user untars and runs ./install.sh, which installs the bundled
+# .vsix and enables the proposed API the extension needs.
+#
+# Output: dist/butter-copilot-<version>.tar.gz
+#
+# Usage:
+#   ./bin/release
+#
+# (Changesets / version bumping is wired up separately; this script just packages
+# whatever version is currently in package.json.)
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+name="$(node -p "require('./package.json').name")"
+version="$(node -p "require('./package.json').version")"
+vsix="${name}-${version}.vsix"
+stage="${name}-${version}"
+out_dir="release"
+tarball="${out_dir}/${name}-${version}.tar.gz"
+
+echo "Packaging ${name} v${version}"
+
+# 1. Build the VSIX (runs vscode:prepublish → compile under the hood).
+echo "==> Building VSIX"
+bun run package
+
+if [[ ! -f "${vsix}" ]]; then
+  echo "error: expected VSIX not found: ${vsix}" >&2
+  exit 1
+fi
+
+# 2. Assemble a flat staging directory with the installer + lib + vsix.
+echo "==> Staging release files"
+mkdir -p "${out_dir}"
+rm -rf "${out_dir:?}/${stage:?}"
+mkdir -p "${out_dir}/${stage}"
+cp scripts/install.sh "${out_dir}/${stage}/install.sh"
+cp scripts/argv-merge.sh "${out_dir}/${stage}/argv-merge.sh"
+cp "${vsix}" "${out_dir}/${stage}/${vsix}"
+chmod +x "${out_dir}/${stage}/install.sh"
+
+# 3. Create the tarball (paths inside are prefixed with the stage dir name so it
+#    untars into a single folder).
+echo "==> Creating tarball"
+tar -czf "${tarball}" -C "${out_dir}" "${stage}"
+
+# 4. Clean up the staging directory; keep the tarball and the vsix.
+rm -rf "${out_dir:?}/${stage:?}"
+
+echo
+echo "Created ${tarball}"
+echo "Contents:"
+tar -tzf "${tarball}" | sed 's/^/  /'
+echo
+echo "Install with:"
+echo "  tar xzf $(basename "${tarball}")"
+echo "  cd ${stage} && ./install.sh"

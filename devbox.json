@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/main/.schema/devbox.schema.json",
+  "packages": {
+    "bun": "1.3.9",
+    "nodejs": "24",
+    "prek": "0.3.4",
+    "bats": "1.12.0",
+    "shellcheck": "0.11.0"
+  },
+  "shell": {
+    "scripts": {
+      "test": "bun test",
+      "test:scripts": "bats scripts/argv-merge.bats",
+      "lint": "bun run lint",
+      "lint:fix": "bun run lint:fix",
+      "build": "bun run compile",
+      "deploy:local": "./bin/deploy-local",
+      "verify": "bun run format && prek run --all-files --refresh"
+    },
+    "init_hook": ["bun install"]
+  }
+}
