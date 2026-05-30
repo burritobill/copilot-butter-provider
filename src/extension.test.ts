@@ -1,37 +1,4 @@
-import { describe, expect, it, mock } from "bun:test"
-
-void mock.module("vscode", () => ({
-  EventEmitter: class {
-    fire() {}
-    dispose() {}
-    event() {}
-  },
-  lm: { registerLanguageModelChatProvider: () => ({ dispose() {} }) },
-  commands: { registerCommand: () => ({ dispose() {} }) },
-  window: {
-    showInformationMessage: () => {},
-    showWarningMessage: () => undefined,
-    showErrorMessage: () => undefined,
-    showQuickPick: () => undefined,
-    createOutputChannel: () => ({
-      appendLine() {},
-      append() {},
-      show() {},
-      dispose() {},
-    }),
-    createTerminal: () => ({ show() {}, sendText() {} }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: (_key: string, defaultValue: unknown) => defaultValue,
-      update: () => Promise.resolve(),
-    }),
-  },
-  ConfigurationTarget: { Global: 1 },
-  LanguageModelTextPart: class {
-    constructor(public text: string) {}
-  },
-}))
+import { describe, expect, it } from "bun:test"
 
 describe("extension", () => {
   it("exports activate and deactivate", async () => {

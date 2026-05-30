@@ -1,21 +1,8 @@
-import { afterEach, describe, expect, it, mock } from "bun:test"
+import { afterEach, describe, expect, it } from "bun:test"
 
 import { serve } from "bun"
 
-import type { ProcessSettings } from "./processManager"
-
-// ProcessManager touches vscode only for EventEmitter (construction) — runtime
-// settings are injected via the constructor, so these tests don't depend on a
-// global vscode config mock (which is shared/order-dependent across files).
-void mock.module("vscode", () => ({
-  EventEmitter: class {
-    event = () => ({ dispose() {} })
-    fire() {}
-    dispose() {}
-  },
-}))
-
-const { ProcessManager } = await import("./processManager")
+import { ProcessManager, type ProcessSettings } from "./processManager"
 
 function settingsFor(overrides: Partial<ProcessSettings>): () => ProcessSettings {
   return () => ({ mode: "managed", port: 8091, externalUrl: "http://localhost:8080", ...overrides })

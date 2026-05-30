@@ -1,27 +1,6 @@
-import { describe, expect, it, mock } from "bun:test"
+import { describe, expect, it } from "bun:test"
 
-void mock.module("vscode", () => ({
-  EventEmitter: class {
-    fire() {}
-    dispose() {}
-    event() {}
-  },
-  window: {
-    showQuickPick: () => undefined,
-    showWarningMessage: () => undefined,
-    showErrorMessage: () => undefined,
-    createTerminal: () => ({ show() {}, sendText() {} }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: (_key: string, defaultValue: unknown) => defaultValue,
-      update: () => Promise.resolve(),
-    }),
-  },
-  ConfigurationTarget: { Global: 1 },
-}))
-
-const { detectProfileType, parseAwsConfig } = await import("./credentialManager")
+import { detectProfileType, parseAwsConfig } from "./credentialManager"
 
 describe("parseAwsConfig", () => {
   it("parses profiles from AWS config format", () => {

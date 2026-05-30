@@ -1,14 +1,6 @@
-import { describe, expect, it, mock } from "bun:test"
+import { describe, expect, it } from "bun:test"
 
-void mock.module("vscode", () => ({
-  EventEmitter: class {
-    event = () => ({ dispose() {} })
-    fire() {}
-    dispose() {}
-  },
-}))
-
-const { RequestLogStore } = await import("./requestLogStore")
+import { RequestLogStore } from "./requestLogStore"
 
 function traceLine(fields: Record<string, unknown>): string {
   return `${JSON.stringify({ time: "2026-05-29T10:00:00Z", level: "INFO", msg: "request trace", ...fields })}\n`
