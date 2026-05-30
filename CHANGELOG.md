@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.4
+
+### Patch Changes
+
+- 29c30b2: Support self updating
+
 ## 0.0.3
 
 ### Patch Changes
