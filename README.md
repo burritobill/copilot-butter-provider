@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/copilot_butter.svg" alt="Butter logo" width="200">
+</p>
+
 # Butter for Copilot
 
 Use AWS Bedrock models (Claude, etc.) in GitHub Copilot Chat via a local [Butter](https://github.com/temikus/butter) proxy.
