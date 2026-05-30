@@ -24,20 +24,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Build release tarball
+      - name: Check if release needed
         if: steps.changesets.outputs.hasChangesets == 'false'
-        run: bun run release
-
-      - name: Create GitHub Release
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        id: check_tag
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="v${VERSION}"
-
-          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
-            git tag "$TAG"
-            git push origin "$TAG"
+          if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build release tarball
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.check_tag.outputs.exists == 'false'
+        run: bun run release
+
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.check_tag.outputs.version }}"
+          TAG="${{ steps.check_tag.outputs.tag }}"
+
+          git tag "$TAG"
+          git push origin "$TAG"
 
           # Create a fixed-name copy so the latest download URL is stable
           cp release/butter-copilot-"${VERSION}".tar.gz release/butter-copilot.tar.gz

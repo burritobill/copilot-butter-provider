@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/copilot_butter.svg" alt="Butter logo" width="200">
+  <img src="public/copilot_butter.png" alt="Butter logo" width="200">
 </p>
 
 # Butter for Copilot
