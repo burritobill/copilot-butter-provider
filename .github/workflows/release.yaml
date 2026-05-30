@@ -39,7 +39,12 @@ jobs:
             git push origin "$TAG"
           fi
 
-          gh release create "$TAG" release/*.tar.gz \
+          # Create a fixed-name copy so the latest download URL is stable
+          cp release/butter-copilot-"${VERSION}".tar.gz release/butter-copilot.tar.gz
+
+          gh release create "$TAG" \
+            release/butter-copilot-"${VERSION}".tar.gz \
+            release/butter-copilot.tar.gz \
             --title "$TAG" \
             --generate-notes
         env:
