@@ -2,66 +2,31 @@
 
 Use AWS Bedrock models (Claude, etc.) in GitHub Copilot Chat via a local [Butter](https://github.com/temikus/butter) proxy.
 
-## Features
-
-- **Managed proxy** — auto-downloads and runs Butter locally
-- **AWS credential support** — SSO, credential_process (Granted), assume-role, static keys, environment variables
-- **Dynamic model discovery** — models are fetched from Butter's `/v1/models` endpoint
-- **Streaming** — full streaming support with tool calling
-- **Status bar** — real-time process state with quick actions
-
-## Prerequisites
-
-- [VS Code](https://code.visualstudio.com/) 1.103+
-- [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) extension
-- AWS credentials configured (`~/.aws/config`) with Bedrock access
-
 ## Install
 
-The recommended way is the install script, which installs the `.vsix` **and**
-enables the proposed API the extension requires (see [Proposed API](#proposed-api)):
-
 ```sh
-./scripts/install.sh            # uses the newest .vsix in the repo root
-./scripts/install.sh path.vsix  # or pass an explicit .vsix
+curl -fsSL https://github.com/burritobill/copilot-butter-provider/releases/latest/download/butter-copilot.tar.gz | tar xz && cd butter-copilot-* && ./install.sh
 ```
 
 Then **restart VS Code**.
 
-### Manual install
+> **Prerequisites:** VS Code 1.103+, [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot), and AWS credentials (`~/.aws/config`) with Bedrock access.
 
-Install from `.vsix`:
+## What it does
 
-```sh
-code --install-extension butter-copilot-0.0.1.vsix
-```
+The extension registers as a Copilot language model provider, so Bedrock models (Claude Sonnet, Opus, Haiku, etc.) appear in the Copilot Chat model picker alongside the default models. It manages a local [Butter](https://github.com/temikus/butter) proxy that translates between Copilot's API and AWS Bedrock.
 
-Or use **Extensions: Install from VSIX...** from the command palette.
-
-Then enable the proposed API (see below) and restart VS Code.
-
-### Proposed API
-
-This extension registers as a Copilot language model provider via VS Code's
-`chatProvider` proposed API, which is **not yet finalized**. To use it in stable
-VS Code, the extension id must be allow-listed in VS Code's `argv.json`:
-
-```jsonc
-// ~/.vscode/argv.json  (Insiders: ~/.vscode-insiders/argv.json)
-{
-  "enable-proposed-api": ["burritobill.butter-copilot"],
-}
-```
-
-`./scripts/install.sh` does this for you, merging the entry without disturbing
-existing settings. A VS Code restart is required after the change.
+- **Zero config** — auto-downloads and manages the Butter binary
+- **AWS credentials** — SSO, credential_process (Granted), assume-role, static keys, env vars
+- **Dynamic models** — discovers available models from Bedrock automatically
+- **Streaming + tools** — full support for streaming responses and tool calling
+- **Status bar** — shows proxy state with quick actions
 
 ## Setup
 
 1. Open the command palette (`Cmd+Shift+P`)
 2. Run **Butter: Select AWS Profile** to choose your AWS profile
-3. Run **Butter: Start Proxy** (or it starts automatically on activation)
-4. Open Copilot Chat and select a Butter model from the model picker
+3. The proxy starts automatically — select a Butter model from the Copilot Chat model picker
 
 ## Commands
 
@@ -75,27 +40,54 @@ existing settings. A VS Code restart is required after the change.
 | Butter: Select AWS Profile | Choose an AWS profile for Bedrock |
 | Butter: Update Binary      | Download the latest Butter binary |
 | Butter: Settings           | Open extension settings           |
-| Butter: Status Menu        | Quick actions from status bar     |
-| Butter: Reset Config       | Regenerate default config         |
 
-## Settings
+## Configuration
 
-| Setting                      | Default                 | Description                                                   |
-| ---------------------------- | ----------------------- | ------------------------------------------------------------- |
-| `butter-copilot.mode`        | `managed`               | `managed` (local process) or `external` (connect to existing) |
-| `butter-copilot.externalUrl` | `http://localhost:8080` | URL for external Butter instance                              |
-| `butter-copilot.port`        | `8091`                  | Port for managed Butter process                               |
-| `butter-copilot.awsProfile`  | `""`                    | AWS profile name                                              |
-| `butter-copilot.awsRegion`   | `us-west-2`             | AWS region for Bedrock                                        |
-| `butter-copilot.logLevel`    | `info`                  | Log level for Butter output                                   |
+| Setting                               | Default                 | Description                                                   |
+| ------------------------------------- | ----------------------- | ------------------------------------------------------------- |
+| `butter-copilot.mode`                 | `managed`               | `managed` (local process) or `external` (connect to existing) |
+| `butter-copilot.externalUrl`          | `http://localhost:8080` | URL for external Butter instance                              |
+| `butter-copilot.port`                 | `8091`                  | Port for managed Butter process                               |
+| `butter-copilot.awsProfile`           | —                       | AWS profile name                                              |
+| `butter-copilot.awsRegion`            | `us-west-2`             | AWS region for Bedrock                                        |
+| `butter-copilot.logLevel`             | `info`                  | Log level (`debug` / `info` / `warn` / `error`)               |
+| `butter-copilot.logBodies`            | `false`                 | Log request/response bodies (may expose secrets)              |
+| `butter-copilot.useInferenceProfiles` | `false`                 | Use custom inference profiles for cost attribution            |
 
-## External Mode
+## External mode
 
 To connect to an existing Butter instance instead of running a managed one:
 
-1. Set `butter-copilot.mode` to `external`
-2. Set `butter-copilot.externalUrl` to your Butter instance URL
-3. Reload VS Code
+```jsonc
+// .vscode/settings.json
+{
+  "butter-copilot.mode": "external",
+  "butter-copilot.externalUrl": "http://your-butter-host:8080",
+}
+```
+
+## How the install works
+
+The extension uses VS Code's `chatProvider` proposed API, which requires the extension ID to be allow-listed in `~/.vscode/argv.json`. The install script handles this automatically — it installs the `.vsix` and merges the allow-list entry without disturbing existing settings.
+
+<details>
+<summary>Manual install</summary>
+
+```sh
+code --install-extension butter-copilot-*.vsix
+```
+
+Then add to `~/.vscode/argv.json` (or `~/.vscode-insiders/argv.json`):
+
+```jsonc
+{
+  "enable-proposed-api": ["burritobill.butter-copilot"],
+}
+```
+
+Restart VS Code.
+
+</details>
 
 ## License
 
