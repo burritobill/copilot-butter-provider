@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.5
+
+### Patch Changes
+
+- 49345c8: Fix token count in copilot chat
+
 ## 0.0.4
 
 ### Patch Changes
