@@ -24,6 +24,23 @@ interface ContentBlockStop extends AnthropicEvent {
   index: number
 }
 
+interface MessageStart extends AnthropicEvent {
+  type: "message_start"
+  message: { usage?: { input_tokens?: number; output_tokens?: number } }
+}
+
+interface MessageDelta extends AnthropicEvent {
+  type: "message_delta"
+  usage?: { output_tokens?: number }
+}
+
+/** Token usage extracted from the Anthropic streaming response. */
+export interface AnthropicUsage {
+  prompt_tokens: number
+  completion_tokens: number
+  total_tokens: number
+}
+
 export interface AnthropicMessagesRequest {
   model: string
   max_tokens: number
@@ -44,7 +61,7 @@ export async function streamAnthropicMessages(
   request: AnthropicMessagesRequest,
   progress: vscode.Progress<vscode.LanguageModelTextPart | vscode.LanguageModelToolCallPart>,
   token: vscode.CancellationToken,
-): Promise<void> {
+): Promise<AnthropicUsage | undefined> {
   const controller = new AbortController()
   const cancelListener = token.onCancellationRequested(() => controller.abort())
 
@@ -69,7 +86,7 @@ export async function streamAnthropicMessages(
       throw new Error("Response body is null")
     }
 
-    await parseAnthropicSSE(response.body, progress, token)
+    return await parseAnthropicSSE(response.body, progress, token)
   } finally {
     cancelListener.dispose()
   }
@@ -144,10 +161,14 @@ async function parseAnthropicSSE(
   body: ReadableStream<Uint8Array>,
   progress: vscode.Progress<vscode.LanguageModelTextPart | vscode.LanguageModelToolCallPart>,
   token: vscode.CancellationToken,
-): Promise<void> {
+): Promise<AnthropicUsage | undefined> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
   let buffer = ""
+
+  // Track token usage from message_start / message_delta events
+  let inputTokens = 0
+  let outputTokens = 0
 
   // Track active tool_use blocks by index
   const pendingToolCalls = new Map<number, { id: string; name: string; arguments: string }>()
@@ -227,6 +248,23 @@ async function parseAnthropicSSE(
             }
             break
           }
+
+          case "message_start": {
+            const e = event as MessageStart
+            if (e.message?.usage) {
+              inputTokens = e.message.usage.input_tokens ?? 0
+              outputTokens = e.message.usage.output_tokens ?? 0
+            }
+            break
+          }
+
+          case "message_delta": {
+            const e = event as MessageDelta
+            if (e.usage?.output_tokens !== undefined) {
+              outputTokens = e.usage.output_tokens
+            }
+            break
+          }
         }
       }
     }
@@ -241,6 +279,16 @@ async function parseAnthropicSSE(
       }
       progress.report(new vscode.LanguageModelToolCallPart(tc.id, tc.name, input))
     }
+
+    // Return collected usage if any tokens were reported
+    if (inputTokens > 0 || outputTokens > 0) {
+      return {
+        prompt_tokens: inputTokens,
+        completion_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+      }
+    }
+    return undefined
   } finally {
     reader.releaseLock()
   }

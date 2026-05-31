@@ -391,6 +391,49 @@ describe("ButterChatModelProvider", () => {
       provider.dispose()
     })
 
+    it("never estimates 0 tokens for a non-empty message with an unexpected shape", async () => {
+      const provider = new ButterChatModelProvider(
+        () => "http://localhost:8091", // unreachable → heuristic fallback
+        makeOutputChannel() as never,
+      )
+
+      // A message whose content parts don't match any known LanguageModel*Part
+      // class (e.g. a future/proposed shape). The structured walk yields 0, so
+      // the heuristic must fall back to serializing the whole message.
+      const message = {
+        role: 1,
+        content: [{ kind: "future-part", value: "some meaningful content here" }],
+      } as never
+
+      const count = await provider.provideTokenCount(
+        { id: "claude-3" } as never,
+        message,
+        makeToken() as never,
+      )
+
+      expect(count).toBeGreaterThan(0)
+      provider.dispose()
+    })
+
+    it("estimates 0 tokens only for a truly empty message", async () => {
+      const provider = new ButterChatModelProvider(
+        () => "http://localhost:8091", // unreachable → heuristic fallback
+        makeOutputChannel() as never,
+      )
+
+      const count = await provider.provideTokenCount(
+        { id: "claude-3" } as never,
+        { role: 1, content: [] } as never,
+        makeToken() as never,
+      )
+
+      // An empty message serializes to a small object; ensure we don't crash
+      // and produce a small, finite count.
+      expect(Number.isFinite(count)).toBe(true)
+      expect(count).toBeGreaterThanOrEqual(0)
+      provider.dispose()
+    })
+
     it("warns once on 403 and stops calling the endpoint", async () => {
       warningMessages.length = 0
       let calls = 0

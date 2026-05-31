@@ -149,7 +149,16 @@ export class ButterChatModelProvider implements vscode.LanguageModelChatProvider
       `Chat request: model=${model.id}, messages=${messages.length}, tools=${options.tools?.length ?? 0}`,
     )
 
-    await streamAnthropicMessages(baseUrl, request, progress, token)
+    const usage = await streamAnthropicMessages(baseUrl, request, progress, token)
+
+    // Emit usage stats as a LanguageModelDataPart so VS Code's context-window
+    // gauge can display token counts for BYOK models.
+    if (usage) {
+      const usageData = new TextEncoder().encode(JSON.stringify(usage))
+      ;(progress as unknown as vscode.Progress<vscode.LanguageModelDataPart>).report(
+        new vscode.LanguageModelDataPart(usageData, "usage"),
+      )
+    }
   }
 
   async provideTokenCount(
@@ -231,8 +240,18 @@ function estimateTokens(text: string | vscode.LanguageModelChatRequestMessage): 
     return Math.ceil(text.length / 4)
   }
   let totalChars = 0
-  for (const part of text.content) {
-    totalChars += estimatePartChars(part)
+  const content = text.content
+  if (Array.isArray(content)) {
+    for (const part of content) {
+      totalChars += estimatePartChars(part)
+    }
+  }
+  // Defensive fallback: if the structured walk produced nothing (e.g. an
+  // unexpected message shape from the proposed API, where `content` is empty
+  // or its parts don't match the known classes), serialize the whole message
+  // so the gauge never collapses to 0 for a non-empty message.
+  if (totalChars === 0) {
+    totalChars = safeJsonLength(text)
   }
   return Math.ceil(totalChars / 4)
 }
